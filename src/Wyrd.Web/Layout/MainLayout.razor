@@ -1,18 +1,10 @@
 @inherits LayoutComponentBase
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <span>Pre-alfa</span>
-            <a href="https://github.com/gabra666/wyrd-blazor" target="_blank" rel="noopener noreferrer">GitHub</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+    <header class="site-nav">
+        <a class="brand" href=""><span>ᚹ</span><strong>WYRD</strong></a>
+        <span>Simulador económico · Pre-alfa</span>
+        <a href="https://github.com/gabra666/wyrd-blazor" target="_blank" rel="noopener noreferrer">Código en GitHub ↗</a>
+    </header>
+    <main class="content">@Body</main>
 </div>

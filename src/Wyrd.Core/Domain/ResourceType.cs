@@ -3,9 +3,30 @@ namespace Wyrd.Core.Domain
 
 public enum ResourceType
 {
-    Gold,
+    Silver,
+    Water,
+    Grain,
+    Livestock,
     Wood,
+    Iron,
     Stone,
-    Food
+    Food,
+    Hides,
+    Wool,
+    Planks,
+    Charcoal,
+    Tar,
+    CutStone,
+    Beer,
+    Tools,
+    Clothing,
+    Weapons,
+    Shields,
+    Armor,
+    Jewelry,
+    Whetstone,
+    Runestone,
+    Seidr,
+    Galdr
 }
 }

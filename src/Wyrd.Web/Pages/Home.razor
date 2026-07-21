@@ -1,106 +1,176 @@
 @page "/"
+@using System.Globalization
 
-<PageTitle>Wyrd — Prototipo de estrategia</PageTitle>
+<PageTitle>Wyrd — Laboratorio económico</PageTitle>
 
-<section class="hero-panel">
+<header class="realm-header">
     <div>
-        <span class="eyebrow">Prototipo de reglas · Turno @turn</span>
-        <h1>Forja un reino.<br />Conquista una región.</h1>
-        <p class="lead">Wyrd es un laboratorio de estrategia donde ciudades, héroes y ejércitos compiten por dominar el mapa.</p>
-        <button class="primary-action" @onclick="AdvanceTurn">Simular siguiente turno</button>
+        <span class="eyebrow">Laboratorio económico · Campaña de 90 días</span>
+        <h1>@realm.Name</h1>
+        <p>@raceDefinition.Name de @raceDefinition.Realm · @raceDefinition.BonusDescription</p>
     </div>
-    <div class="sigil" aria-hidden="true">W</div>
+    <div class="header-actions">
+        <label>
+            <span>Raza del reino</span>
+            <select value="@selectedRace" @onchange="ChangeRace" aria-label="Seleccionar raza">
+                @foreach (var race in GameCatalog.Races.Values)
+                {
+                    <option value="@race.Type">@race.Name · @race.Realm</option>
+                }
+            </select>
+        </label>
+        <button class="button button-secondary" @onclick="Reset">Reiniciar</button>
+        <button class="button button-primary" @onclick="AdvanceDay" disabled="@realm.IsComplete">
+            @(realm.IsComplete ? "Campaña finalizada" : "Terminar día")
+        </button>
+    </div>
+</header>
+
+<section class="metric-grid" aria-label="Estado del reino">
+    <article class="metric-card"><span>Día</span><strong>@DisplayDay <small>/ @realm.MaximumDays</small></strong><p>@(realm.IsComplete ? "La campaña ha terminado" : "El mundo espera tu decisión")</p></article>
+    <article class="metric-card accent-card"><span>Valor del Reino</span><strong>@Format(valueCalculator.Calculate(realm))</strong><p>@FormatSigned(LastValueDelta) durante el último día</p></article>
+    <article class="metric-card"><span>Ciudad</span><strong>@city.Name</strong><p>Manantial · +5% de agua</p></article>
 </section>
 
-<section class="resource-grid" aria-label="Recursos de la capital">
-    @foreach (var resource in resources)
+<section class="value-breakdown" aria-label="Desglose del valor del reino">
+    <div><span>Ciudades</span><strong>@Format(valueCalculator.CityValue(realm))</strong></div>
+    <div><span>Recursos</span><strong>@Format(valueCalculator.ResourceValue(realm))</strong></div>
+    <div><span>Edificios</span><strong>@Format(valueCalculator.BuildingValue(realm))</strong></div>
+</section>
+
+<section class="chart-section" aria-labelledby="chart-title">
+    <div class="section-heading"><div><span class="eyebrow">Evolución</span><h2 id="chart-title">Valor del Reino</h2></div><span class="chart-caption">Día 0 — @LastResolvedDay</span></div>
+    <svg class="value-chart" viewBox="0 0 800 180" role="img" aria-label="Evolución del Valor del Reino durante la campaña">
+        <line x1="20" y1="150" x2="780" y2="150" /><line x1="20" y1="30" x2="20" y2="150" />
+        <polyline points="@ChartPoints" />
+        @foreach (var point in ChartMarkers)
+        {
+            <circle cx="@point.X" cy="@point.Y" r="4"><title>Día @point.Day: @Format(point.Value)</title></circle>
+        }
+    </svg>
+</section>
+
+<section class="lab-section" aria-labelledby="resources-title">
+    <div class="section-heading"><div><span class="eyebrow">Inventario global</span><h2 id="resources-title">Recursos del reino</h2></div><p>Las cantidades se comparten entre todas las ciudades.</p></div>
+    @foreach (var category in Enum.GetValues(typeof(ResourceCategory)).Cast<ResourceCategory>())
     {
-        <article class="resource-card">
-            <span>@resource.Icon</span>
-            <div>
-                <small>@resource.Name</small>
-                <strong>@capital.Resources[resource.Type].ToString("N0")</strong>
+        <div class="resource-group">
+            <h3>@CategoryName(category)</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Recurso</th><th>Cantidad</th><th>Cambio</th><th>Valor/u.</th><th>Valor total</th></tr></thead>
+                    <tbody>
+                    @foreach (var resource in GameCatalog.Resources.Values.Where(resource => resource.Category == category))
+                    {
+                        var amount = realm.Resources[resource.Type];
+                        var delta = ResourceDelta(resource.Type);
+                        <tr><td>@resource.Name</td><td>@FormatAmount(amount)</td><td class="@(delta < 0 ? "negative" : delta > 0 ? "positive" : "")">@FormatSigned(delta)</td><td>@FormatPrecise(resource.UnitValue)</td><td>@Format(amount * resource.UnitValue)</td></tr>
+                    }
+                    </tbody>
+                </table>
             </div>
-        </article>
+        </div>
     }
 </section>
 
-<section class="overview-grid">
-    <article class="realm-card featured-card">
-        <span class="card-kicker">Tu reino</span>
-        <h2>@kingdom.Name</h2>
-        <dl>
-            <div><dt>Ciudades</dt><dd>@kingdom.Cities.Count</dd></div>
-            <div><dt>Héroes</dt><dd>@kingdom.Heroes.Count</dd></div>
-            <div><dt>Puntuación</dt><dd>@kingdom.Score</dd></div>
-        </dl>
-    </article>
-
-    <article class="realm-card">
-        <span class="card-kicker">Capital</span>
-        <h2>@capital.Name</h2>
-        <p>Nivel @capital.Level · Muralla @capital.WallLevel</p>
-        <span class="status">Produciendo</span>
-    </article>
-
-    <article class="realm-card">
-        <span class="card-kicker">Comandante</span>
-        <h2>@hero.Name</h2>
-        <p>Nivel @hero.Level · @hero.Army.Soldiers soldados</p>
-        <span class="status">Disponible</span>
-    </article>
+<section class="lab-section" aria-labelledby="buildings-title">
+    <div class="section-heading"><div><span class="eyebrow">Producción y transformación</span><h2 id="buildings-title">Edificios de @city.Name</h2></div><p>La producción aumenta un 25% por nivel.</p></div>
+    @foreach (var group in GameCatalog.Buildings.Values.GroupBy(building => building.Group))
+    {
+        <div class="building-group">
+            <h3>@group.Key</h3>
+            <div class="building-grid">
+                @foreach (var definition in group)
+                {
+                    var building = city.GetBuilding(definition.Type);
+                    var quote = upgradeService.GetQuote(realm, city, definition.Type);
+                    <article class="building-card @(building.Level == 0 ? "unbuilt" : "")">
+                        <div class="building-title"><div><span>@(building.Level == 0 ? "Sin construir" : "En funcionamiento")</span><h4>@definition.Name</h4></div><strong>N@(building.Level)</strong></div>
+                        <p class="production-line">@ProductionSummary(definition, building)</p>
+                        <p class="investment">Valor preservado: @Format(building.InvestedValue * 0.75m)</p>
+                        @if (building.Level < 10)
+                        {
+                            <div class="cost-line"><span>Mejora a N@(quote.TargetLevel)</span><span>@CostSummary(quote)</span></div>
+                            <button class="button button-upgrade" disabled="@(!quote.CanUpgrade)" @onclick="() => Upgrade(definition.Type)">@(building.Level == 0 ? "Construir" : "Mejorar")</button>
+                            @if (!quote.CanUpgrade) { <small class="blocked">@quote.BlockedReason</small> }
+                        }
+                        else { <span class="max-level">Nivel máximo</span> }
+                    </article>
+                }
+            </div>
+        </div>
+    }
 </section>
 
-<section class="rules-section" id="rules">
-    <div>
-        <span class="eyebrow">Dirección del diseño</span>
-        <h2>El ciclo de Wyrd</h2>
-    </div>
-    <ol class="rule-list">
-        <li><strong>Prospera</strong><span>Obtén recursos y mejora los edificios de tus ciudades.</span></li>
-        <li><strong>Recluta</strong><span>Forma ejércitos y confíalos a héroes capaces.</span></li>
-        <li><strong>Conquista</strong><span>Ataca ciudades rivales para controlar regiones del mapa.</span></li>
-        <li><strong>Domina</strong><span>Convierte tu expansión en puntos y alcanza el primer puesto.</span></li>
-    </ol>
+<section class="report-section" aria-labelledby="report-title">
+    <div class="section-heading"><div><span class="eyebrow">Registro de simulación</span><h2 id="report-title">Último día</h2></div></div>
+    @if (realm.LastReport == null)
+    {
+        <p class="empty-state">Termina el primer día para generar un informe de producción.</p>
+    }
+    else
+    {
+        <div class="report-grid">
+            <article><h3>Producido</h3>@foreach (var item in realm.LastReport.Produced.OrderByDescending(item => item.Value)) { <div><span>@GameCatalog.Resources[item.Key].Name</span><strong>+@FormatAmount(item.Value)</strong></div> }</article>
+            <article><h3>Consumido</h3>@if (realm.LastReport.Consumed.Count == 0) { <p>Sin consumo.</p> } @foreach (var item in realm.LastReport.Consumed.OrderByDescending(item => item.Value)) { <div><span>@GameCatalog.Resources[item.Key].Name</span><strong>-@FormatAmount(item.Value)</strong></div> }</article>
+            <article><h3>Escasez</h3>@if (realm.LastReport.Shortages.Count == 0) { <p>Todos los edificios trabajaron con normalidad.</p> } @foreach (var shortage in realm.LastReport.Shortages) { <p>@shortage</p> }</article>
+        </div>
+    }
 </section>
 
 @code {
-    private readonly City capital = new City("Skallgard", "northern-reach");
-    private readonly Hero hero = new Hero("Yrsa la Errante", new Army(240));
-    private readonly Kingdom kingdom = new Kingdom("El Pacto del Cuervo");
-    private readonly ResourceView[] resources =
-    {
-        new ResourceView(ResourceType.Gold, "Oro", "◆"),
-        new ResourceView(ResourceType.Wood, "Madera", "♣"),
-        new ResourceView(ResourceType.Stone, "Piedra", "⬟"),
-        new ResourceView(ResourceType.Food, "Alimento", "●")
-    };
-    private int turn = 1;
+    private readonly GameDayService dayService = new GameDayService();
+    private readonly BuildingUpgradeService upgradeService = new BuildingUpgradeService();
+    private readonly RealmValueCalculator valueCalculator = new RealmValueCalculator();
+    private RaceType selectedRace = RaceType.Midgardsmenn;
+    private Realm realm = null!;
+    private City city => realm.Cities[0];
+    private RaceDefinition raceDefinition => GameCatalog.Races[realm.Race];
+    private int DisplayDay => realm.IsComplete ? realm.MaximumDays : realm.CurrentDay;
+    private int LastResolvedDay => realm.LastReport?.Day ?? 0;
+    private decimal LastValueDelta => realm.LastReport == null ? 0m : realm.LastReport.ValueAfter - realm.LastReport.ValueBefore;
 
-    protected override void OnInitialized()
+    protected override void OnInitialized() => Reset();
+    private void ChangeRace(ChangeEventArgs args) { if (Enum.TryParse<RaceType>(args.Value?.ToString(), out var race)) selectedRace = race; Reset(); }
+    private void Reset() => realm = RealmFactory.CreateStarterRealm(selectedRace);
+    private void AdvanceDay() => dayService.Advance(realm);
+    private void Upgrade(BuildingType type) => upgradeService.TryUpgrade(realm, city, type);
+
+    private decimal ResourceDelta(ResourceType resource)
     {
-        kingdom.AddCity(capital);
-        kingdom.RecruitHero(hero);
-        GameRules.ApplyCityIncome(capital);
+        if (realm.LastReport == null) return 0m;
+        realm.LastReport.Produced.TryGetValue(resource, out var produced);
+        realm.LastReport.Consumed.TryGetValue(resource, out var consumed);
+        return produced - consumed;
     }
 
-    private void AdvanceTurn()
+    private static string CategoryName(ResourceCategory category) => category switch { ResourceCategory.Primary => "Materias primas", ResourceCategory.Processed => "Recursos procesados", ResourceCategory.Finished => "Productos terminados", _ => "Recursos especiales" };
+
+    private static string ProductionSummary(BuildingDefinition definition, CityBuilding building)
     {
-        GameRules.ApplyCityIncome(capital);
-        turn++;
+        if (!string.IsNullOrWhiteSpace(definition.EffectDescription)) return definition.EffectDescription!;
+        if (definition.Recipe == null) return "Sin producción directa";
+        var level = Math.Max(1, building.Level);
+        var factor = EconomyMath.LevelFactor(level);
+        var inputs = string.Join(" + ", definition.Recipe.Inputs.Select(item => FormatAmount(item.Value * factor) + " " + GameCatalog.Resources[item.Key].Name.ToLowerInvariant()));
+        var outputs = string.Join(" + ", definition.Recipe.Outputs.Select(item => FormatAmount(item.Value * factor) + " " + GameCatalog.Resources[item.Key].Name.ToLowerInvariant()));
+        var requirement = definition.Recipe.Requirements.Count == 0 ? "" : "Requiere una reserva de " + string.Join(", ", definition.Recipe.Requirements.Select(item => GameCatalog.Resources[item.Key].Name.ToLowerInvariant())) + ". ";
+        return requirement + (inputs.Length == 0 ? "Produce " : inputs + " → ") + outputs + (building.Level == 0 ? " en nivel 1" : " por día");
     }
 
-    private sealed class ResourceView
+    private static string CostSummary(UpgradeQuote quote) => string.Join(" · ", quote.Costs.Select(cost => FormatAmount(cost.Value) + " " + GameCatalog.Resources[cost.Key].Name.ToLowerInvariant()));
+    private static string Format(decimal value) => decimal.Round(value, 1).ToString("N1", CultureInfo.GetCultureInfo("es-ES"));
+    private static string FormatAmount(decimal value) => decimal.Round(value, 2).ToString("N2", CultureInfo.GetCultureInfo("es-ES"));
+    private static string FormatPrecise(decimal value) => value.ToString("0.####", CultureInfo.GetCultureInfo("es-ES"));
+    private static string FormatSigned(decimal value) => value > 0 ? "+" + Format(value) : Format(value);
+    private string ChartPoints => string.Join(" ", ChartMarkers.Select(point => point.X + "," + point.Y));
+    private IEnumerable<ChartPoint> ChartMarkers
     {
-        public ResourceView(ResourceType type, string name, string icon)
+        get
         {
-            Type = type;
-            Name = name;
-            Icon = icon;
+            var history = realm.ValueHistory; var min = history.Min(point => point.Value); var max = history.Max(point => point.Value); var range = Math.Max(1m, max - min);
+            foreach (var point in history) { var x = 20m + (760m * point.Day / realm.MaximumDays); var y = 150m - (120m * (point.Value - min) / range); yield return new ChartPoint(point.Day, point.Value, x.ToString("0.##", CultureInfo.InvariantCulture), y.ToString("0.##", CultureInfo.InvariantCulture)); }
         }
-
-        public ResourceType Type { get; }
-        public string Name { get; }
-        public string Icon { get; }
     }
+    private sealed class ChartPoint { public ChartPoint(int day, decimal value, string x, string y) { Day = day; Value = value; X = x; Y = y; } public int Day { get; } public decimal Value { get; } public string X { get; } public string Y { get; } }
 }

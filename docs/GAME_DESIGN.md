@@ -1,451 +1,250 @@
 # Project Wyrd — documento de diseño
 
-> Documento vivo. Debe actualizarse cuando una conversación, prototipo o prueba de balance produzca una decisión de diseño nueva o cambie una existente.
+> Documento vivo. Debe actualizarse cuando una conversación, prototipo o prueba de balance produzca una decisión nueva o cambie una existente.
 
 | Campo | Valor |
 | --- | --- |
 | Estado | Preproducción y prototipado de reglas |
-| Versión | 0.1 |
-| Última revisión | 2026-07-21 |
+| Versión | 0.2 |
+| Última revisión | 2026-07-22 |
 | Plataforma de prototipado | Blazor WebAssembly |
 | Presentación final prevista | Unity |
 
 ## Cómo mantener este documento
 
-- Una regla acordada se incorpora a su sección y se refleja en **Decisiones establecidas**.
-- Una cifra o mecánica aún no validada se marca como **provisional**; no debe tratarse como regla definitiva en `Wyrd.Core`.
-- Una propuesta descartada se conserva en el historial de revisiones indicando el motivo, en vez de desaparecer sin contexto.
-- Cada cambio significativo incrementa la versión del documento y añade una entrada breve al historial.
-- El código, las pruebas y este documento deben usar la misma terminología para los conceptos del dominio.
+- Las reglas acordadas se incorporan a su sección y a **Decisiones establecidas**.
+- Las cifras que aún deben validarse se marcan como **provisionales**.
+- Las propuestas descartadas se conservan en el historial con su motivo.
+- El código, las pruebas y este documento deben emplear la misma terminología.
+- En Wyrd se habla de **reinos** y **Valor del Reino**, nunca de imperios ni `Empire Value`.
 
 ## Historial de revisiones
 
 | Versión | Fecha | Cambio |
 | --- | --- | --- |
-| 0.1 | 2026-07-21 | Primera consolidación del concepto, sistemas previstos, decisiones actuales y cuestiones abiertas. |
+| 0.1 | 2026-07-21 | Primera consolidación del concepto y los sistemas previstos. |
+| 0.2 | 2026-07-22 | Se define el primer laboratorio económico: siete razas, 25 recursos, cadenas productivas, niveles de edificios, paso del día y Valor del Reino. Se sustituye “imperio” por “reino”. |
 
 ## 1. Concepto central
 
-Project Wyrd es un juego de estrategia offline inspirado principalmente en *Empire Strike*, reinterpretado como una experiencia para un solo jugador ambientada en una fantasía de inspiración nórdica.
+Project Wyrd es un juego de estrategia offline para un solo jugador inspirado en *Empire Strike* y ambientado en una fantasía basada en la mitología nórdica.
 
-La partida enfrenta al jugador contra 99 imperios controlados por IA. No existen servidores, jugadores reales ni presión de tiempo: el mundo avanza únicamente cuando el jugador decide terminar el día.
+Una campaña completa enfrentará al reino del jugador con 99 reinos controlados por IA. No existen servidores, jugadores reales ni presión de tiempo: el mundo avanza cuando el jugador decide terminar el día.
 
-La intención es conservar los aspectos más interesantes de *Empire Strike*:
+Los pilares previstos son:
 
 - Construcción y administración de ciudades.
-- Crecimiento de población.
-- Reclutamiento de tropas.
+- Producción, transformación y acumulación de recursos.
+- Crecimiento de población y reclutamiento de tropas.
 - Héroes que lideran ejércitos.
-- Conquista territorial.
-- Clanes, guerras y control regional.
-- Rankings y objetivos competitivos.
+- Conquista de ciudades y control regional.
+- Clanes, guerras, magia global y rankings.
 
-Todo ello se adapta a una campaña autocontenida y completamente simulada.
+> Wyrd es un juego de estrategia offline donde el jugador desarrolla un reino en un mundo nórdico simulado junto a 99 reinos de IA. Su lógica reside en un núcleo C# independiente, reutilizable desde el laboratorio web y desde una presentación final en Unity.
 
-### Definición condensada
+## 2. Campaña y paso del día
 
-> Project Wyrd es un juego de estrategia offline inspirado en Empire Strike, donde el jugador desarrolla un imperio en un mundo de fantasía nórdica simulado junto a 99 imperios de IA. La campaña avanza por días controlados por el jugador e incluye ciudades, crecimiento de población, tropas, héroes, combates por rondas, clanes, guerras, control regional, magia global y rankings. Su lógica se implementa como un núcleo independiente en C#, reutilizable desde una aplicación web de simulación y una presentación final desarrollada en Unity.
+El jugador actúa sin límite de tiempo real y pulsa **Terminar día** para resolver el mundo. En el juego completo ese paso hará avanzar población, recursos, construcciones, entrenamiento, movimientos, ataques, eventos, rankings y control territorial.
 
-## 2. Estructura de la campaña
+El laboratorio económico actual dura **90 días**. Este número sirve para estudiar curvas de crecimiento y no fija todavía la duración definitiva de todas las campañas.
 
-Cada campaña tiene una duración limitada de días de juego. La duración exacta permanece abierta.
+Cada día económico se resuelve en orden:
 
-El jugador realiza sus acciones sin límite de tiempo real y después pulsa **Terminar día**. Al hacerlo:
+1. Materias primas.
+2. Recursos procesados.
+3. Productos terminados y recursos especiales.
 
-- Crece la población.
-- Se generan recursos.
-- Avanzan construcciones y entrenamientos.
-- Actúan los héroes y ejércitos de la IA.
-- Se resuelven movimientos, ataques y eventos.
-- Se recalculan los rankings y el control territorial.
+Un recurso producido en una fase puede consumirse durante una fase posterior del mismo día.
 
-El objetivo no tiene que ser eliminar a todos los rivales. Al concluir la campaña se compara el desempeño de cada imperio mediante distintos rankings.
+## 3. Reinos y ciudades
 
-## 3. Imperios controlados por IA
+Los recursos pertenecen al reino y forman un inventario global compartido por todas sus ciudades. Las ciudades son los núcleos territoriales y productivos; más adelante también contendrán población, defensas, tropas y un héroe asignado.
 
-El mundo contiene 100 imperios:
+El primer escenario contiene el reino **El Pacto del Cuervo** y su ciudad **Skallgard**, situada en los Confines del Norte. Skallgard posee un Manantial que aumenta un 5% su producción de agua.
 
-- 1 imperio del jugador.
-- 99 imperios controlados por IA.
+El control regional se decidirá por el clan que posea más ciudades en una región. Por tanto, conquistar una ciudad puede cambiar tanto los recursos disponibles como el gobierno regional.
 
-Cada IA opera bajo las mismas reglas generales que el jugador y puede:
+## 4. Razas de Yggdrasil
 
-- Fundar o conquistar ciudades.
-- Entrenar tropas.
-- Mejorar asentamientos.
-- Reclutar héroes.
-- Formar ejércitos.
-- Atacar o defender territorios.
-- Unirse a clanes.
-- Participar en guerras.
-- Competir en los rankings.
+El laboratorio incluye siete razas jugables. Cada una comienza con una única ventaja económica; las ventajas militares, mágicas, demográficas y territoriales se añadirán en capas posteriores.
 
-Las IA no deben comportarse de manera idéntica. Sus personalidades o prioridades estratégicas podrían ser expansionistas, defensivas, económicas, religiosas o agresivas. La lista y el modelo de comportamiento concretos siguen abiertos.
+| Raza | Mundo vinculado | Ventaja económica inicial |
+| --- | --- | --- |
+| Miðgarðsmenn | Midgard | +25% de plata producida por el Mercado |
+| Dvergar | Niðavellir | +10% de hierro |
+| Ljósálfar | Álfheimr | +10% de cereales |
+| Dökkálfar | Svartálfaheimr | +10% de herramientas |
+| Jötnar | Jötunheimr | +10% de piedra |
+| Eldjötnar | Múspellsheimr | +10% de carbón vegetal |
+| Hrímþursar | Niflheim | +10% de agua |
 
-## 4. Ciudades, población y producción
+Los Æsir y Vanir pueden aparecer como entidades divinas o facciones superiores, pero no son razas jugables normales. Hel no aporta por ahora una raza jugable; podrá utilizarse para eventos, criaturas o facciones sobrenaturales. Los draugar no forman una civilización jugable.
 
-Las ciudades son el núcleo del imperio. Cada ciudad puede contener:
+La separación entre Dvergar y Dökkálfar es una interpretación propia del mundo de Wyrd.
 
-- Población.
-- Producción de recursos.
-- Edificios.
-- Defensas.
-- Tropas estacionadas.
-- Un héroe asignado.
-- Posición geográfica y tipo de terreno.
+## 5. Recursos
 
-La población crece diariamente, con rendimientos decrecientes en niveles altos. Como referencia provisional, una ciudad avanzada podría crecer alrededor de 500 habitantes diarios o menos.
+El reino puede almacenar 25 recursos.
 
-La población sirve para:
+### Materias primas
 
-- Desbloquear tropas superiores.
-- Permitir construcciones.
-- Sostener ejércitos.
-- Contribuir al valor general del imperio.
+- Plata: moneda, comercio, joyería y mejoras.
+- Agua: población, alimentos y cerveza.
+- Cereales: comida y cerveza.
+- Ganado: comida, pieles y lana.
+- Madera: combustible, herramientas y componentes.
+- Hierro: herramientas y equipamiento militar.
+- Piedra: construcción y piedra tallada.
 
-La fórmula exacta de crecimiento todavía debe definirse y probarse.
+### Recursos procesados
 
-## 5. Sistema de tropas
+- Comida.
+- Pieles y cuero, representados como un único recurso.
+- Lana.
+- Tablones.
+- Carbón vegetal.
+- Alquitrán.
+- Piedra tallada.
 
-Se propone una progresión de 20 tipos o escalones de tropas. Como referencia provisional, se desbloquearía una nueva tropa aproximadamente cada 5.000 habitantes.
+### Productos terminados
 
-La curva estudiada comienza con niveles consecutivos, continúa con saltos de dos y termina con saltos mayores, alcanzando escalones aproximados de 30 y 45.
+- Cerveza.
+- Herramientas.
+- Ropa.
+- Armas.
+- Escudos.
+- Armaduras.
+- Joyas.
 
-Estos números no tienen que representar únicamente un nivel. Pueden condensar:
+### Recursos especiales
 
-- Poder base.
-- Requisito de población.
-- Coste.
-- Rareza.
-- Complejidad de entrenamiento.
+- Piedras de afilar: entrenamiento de habilidades para `Warrior` y `Thief`.
+- Piedras rúnicas: entrenamiento de habilidades para `Mage` y `Priest`.
+- Seiðr: magia asociada principalmente a magos.
+- Galdr: magia asociada principalmente a sacerdotes.
 
-Cada raza dispone de su propia línea de tropas, con estadísticas y especializaciones diferentes. La tabla definitiva de tropas sigue abierta.
+Las piedras de afilar no se fabrican con piedra común. El Mercado representa su importación gradual y, cuando exista combate, también podrán obtenerse como botín. Se descartan los objetos rituales como recurso económico genérico; los futuros artefactos serán objetos concretos.
 
-## 6. Razas y ambientación
+## 6. Edificios y cadenas productivas
 
-La propuesta inicial contempla seis razas principales. La lista definitiva todavía no se ha decidido.
+Cada ciudad tiene un edificio de cada tipo, con niveles de 0 a 10. Nivel 0 significa que aún no se ha construido. Las mejoras se completan inmediatamente.
 
-Aunque la ambientación se inspira en la mitología nórdica, los Æsir y los Vanir no se usarían como razas jugables normales. Encajan mejor como entidades divinas, facciones superiores o elementos narrativos.
+Productores y soportes:
 
-Las razas mortales pueden diferenciarse mediante:
+- Mina de plata, Pozo, Campos, Pastos, Leñadores, Mina de hierro y Cantera.
+- Mercado: produce plata y progreso gradual de piedras de afilar y rúnicas.
+- Acueducto: aumenta un 5% la producción de agua por nivel.
+- Templo: produce Galdr.
+- Círculo de Meditación: produce Seiðr.
 
-- Líneas de tropas propias.
-- Crecimiento de población y economía.
-- Afinidades con terrenos.
-- Bonificaciones de combate.
-- Acceso a magia o héroes.
+Transformadores:
 
-La inspiración nórdica funciona como base creativa, sin obligar a reproducir literalmente los nueve reinos mitológicos.
+- Molino: cereales → comida.
+- Matadero: ganado → comida y pieles.
+- Esquiladero: requiere una reserva de ganado, sin consumirla → lana.
+- Aserradero: madera → tablones.
+- Carbonera: madera → carbón vegetal.
+- Horno de alquitrán: madera → alquitrán.
+- Cantería: piedra → piedra tallada.
+- Cervecería: cereales y agua → cerveza.
+- Herrería: hierro, madera y carbón → herramientas.
+- Forja de armas: hierro, madera y carbón → armas.
+- Taller de escudos: hierro, tablones y pieles → escudos.
+- Armería: hierro, pieles y carbón → armaduras.
+- Sastrería: lana y pieles → ropa.
+- Orfebrería: plata → joyas.
 
-## 7. Héroes
+La madera sin procesar se usa en mangos, herramientas y armas. Los tablones se reservan para escudos y construcciones más elaboradas.
 
-Cada ciudad puede albergar un héroe. Las cuatro clases principales definidas son:
+Un procesador no puede superar el menor nivel de los edificios que producen directamente sus ingredientes. Los modificadores pasivos y el Mercado no cuentan para este límite.
 
-- `Warrior`.
-- `Thief`.
-- `Mage`.
-- `Priest`.
+## 7. Producción y escasez
 
-Los héroes lideran ejércitos y afectan directamente a los combates. El héroe actúa como comandante y no necesariamente como una unidad individual que sustituya a sus tropas.
+La producción y el consumo de una receta crecen un **25% compuesto por nivel**:
 
-Sus estadísticas previstas incluyen:
+`cantidad del nivel = cantidad base × 1,25^(nivel − 1)`
 
-- Ataque.
-- Defensa.
-- Daño.
-- Velocidad.
-- Moral.
-- Vida.
-- Energía.
-- Heridas.
+Los procesadores trabajan automáticamente cuando disponen de ingredientes. Si varios edificios de una misma fase solicitan un recurso insuficiente, el inventario disponible se reparte proporcionalmente. Una receta con varios ingredientes queda limitada por el ingrediente que cubra el menor porcentaje de su demanda.
 
-La energía se consume con habilidades y magia. Las heridas representan consecuencias más persistentes que la pérdida de vida durante una batalla.
+Las ventajas raciales, el Manantial y el Acueducto se suman antes de multiplicar la producción correspondiente.
 
-### Progresión por victorias
+El balance aspira a conservar al menos un 20% de excedente normal de materias primas y a añadir un 10% de valor en cada transformación. Las cantidades concretas del catálogo actual son valores iniciales de experimentación y deberán validarse jugando el laboratorio.
 
-De forma provisional, un héroe recibe un punto de atributo cada ocho victorias. Esta progresión hace visible la experiencia militar sin depender únicamente de puntos de experiencia convencionales.
+## 8. Mejoras y Valor del Reino
 
-Los héroes contribuyen a rankings como:
+El coste provisional de alcanzar un nivel es:
 
-- Mayor número de victorias.
-- Mejor héroe.
-- Héroe más poderoso.
-- Mayor trayectoria militar.
+`50 × 1,25^(nivel objetivo − 1)` puntos de valor.
 
-## 8. Magos, sacerdotes y magia global
+Composición provisional:
 
-Los magos y sacerdotes permiten utilizar magia global de clan. Como umbral provisional, los hechizos de mayor importancia requieren aproximadamente nivel 12.
+- Niveles 1–3: 40% plata, 30% madera y 30% piedra.
+- Niveles 4–6: 35% plata, 25% tablones, 25% piedra tallada y 15% herramientas.
+- Niveles 7–10: 30% plata, 25% tablones, 25% piedra tallada, 15% herramientas y 5% alquitrán.
 
-Los hechizos pueden afectar a:
+El Valor del Reino se calcula como:
 
-- Regiones.
-- Ciudades.
-- Ejércitos.
-- Producción.
-- Moral.
-- Puntos de acción.
-- Imperios enemigos completos.
+`100 por ciudad + valor de los recursos almacenados + 75% de la inversión acumulada en edificios`
 
-Durante las guerras de clanes, ciertos hechizos podrían robar o eliminar puntos de acción. Esto convierte la capacidad operativa en un recurso que se puede acumular, atacar y proteger.
+Al gastar recursos en una mejora, el edificio conserva el 75% de ese valor. Por ello, el Valor del Reino baja inmediatamente un 25% del coste y después puede recuperarse mediante la producción adicional.
 
-## 9. Puntos de acción
+Los valores unitarios y recetas exactas están implementados en `GameCatalog` como parámetros provisionales de balance. La interfaz muestra cantidad, variación diaria, valor unitario y contribución total para facilitar su ajuste.
 
-Cada día el imperio recibe puntos de acción. La referencia provisional es:
+## 9. Héroes, tropas y combate futuro
 
-- 100 puntos de acción fijos por día.
-- Una cantidad adicional relacionada con el valor del imperio u otras bonificaciones.
+Las cuatro clases principales de héroe serán `Warrior`, `Thief`, `Mage` y `Priest`. Los héroes liderarán ejércitos y tendrán ataque, defensa, daño, velocidad, moral, vida, energía y heridas.
 
-Los puntos de acción se gastan en actividades como:
+Se estudia una progresión de 20 tipos de tropas, con nuevos escalones ligados a la población. El combate se resolverá por rondas y considerará héroes, tropas, moral, terreno, defensas, velocidad y composición del ejército.
 
-- Entrenar tropas.
-- Construir edificios.
-- Mejorar ciudades.
-- Mover ejércitos.
-- Atacar.
-- Entrenar héroes.
-- Utilizar habilidades.
-- Ejecutar acciones diplomáticas.
+Los valores aún provisionales incluyen un punto de atributo por cada ocho victorias y acceso a magia global importante alrededor del nivel 12.
 
-Los puntos de acción pueden acumularse para preparar una guerra, ofensiva u otra fase de la campaña. Como contraparte, algunos hechizos enemigos pueden robarlos, reducirlos, bloquear temporalmente su uso o exigir recursos para protegerlos.
+## 10. Puntos de acción, clanes y regiones
 
-## 10. Ataques y paso del tiempo
+Los puntos de acción podrán acumularse. Servirán para construir, entrenar, mover ejércitos, atacar, usar habilidades y realizar acciones diplomáticas. La referencia inicial es 100 puntos diarios más bonificaciones, aún sin validar.
 
-Los puntos de acción determinan cuánto puede hacer un imperio, pero no deberían permitir conquistar una gran parte del mapa en un único día. Se propone separar dos límites:
+Los límites de ataque serán independientes de los puntos de acción para impedir ofensivas ilimitadas durante un único día.
 
-- **Puntos de acción:** capacidad general para actuar.
-- **Ventanas o límites de ataque:** número de ataques posibles durante el día.
+Los reinos podrán formar clanes, declarar guerras, coordinar ataques, emplear magia global y controlar regiones por mayoría de ciudades. La fama, los monumentos y los rankings especializados se desarrollarán después del núcleo económico.
 
-Una división sencilla tendría mañana, tarde y noche. Una alternativa más detallada incluiría amanecer, mañana, mediodía, tarde, atardecer, noche y medianoche.
+## 11. Arquitectura técnica
 
-La cantidad de franjas y la entidad a la que se aplica el límite —ejército, ciudad o imperio— siguen abiertas.
+- `Wyrd.Core`: modelos, reglas y simulación sin dependencias de Blazor ni Unity.
+- `Wyrd.Web`: laboratorio interactivo para ejecutar días, observar cadenas y ajustar balance.
+- Unity: futura visualización 2D/3D, animación, audio, mapas, efectos e interfaz final.
 
-## 11. Combate
+Las relaciones de IA pertenecerán al núcleo. LOVE/HATE podrá complementar la presentación o el comportamiento en Unity, pero no será una dependencia del simulador.
 
-El combate se resuelve por rondas y participan:
+## 12. Decisiones establecidas
 
-- Ejército atacante.
-- Ejército defensor.
-- Héroes.
-- Tropas.
-- Moral.
-- Terreno.
-- Defensas de la ciudad.
-- Bonificaciones de raza, clase o afinidad.
+- Juego offline para un solo jugador con avance manual por días.
+- Mundo final de un reino jugador y 99 reinos de IA.
+- Terminología `Realm`, Reino y Valor del Reino.
+- Inventario global del reino.
+- Siete razas jugables vinculadas a Yggdrasil.
+- 25 recursos agrupados en cuatro etapas.
+- Un edificio de cada tipo por ciudad, niveles 0–10 y mejora inmediata.
+- Producción compuesta del 25% por nivel.
+- Fases productivas dentro del mismo día y escasez proporcional.
+- Conservación del 75% del valor invertido en edificios.
+- Núcleo C# independiente y Blazor como laboratorio.
 
-Los factores relevantes pueden incluir ataque, defensa, velocidad, daño, orden de actuación, moral, heridas, composición del ejército, ventajas de terreno y fortificaciones.
+## 13. Valores provisionales y cuestiones abiertas
 
-Los combates deben permitir planificación suficiente, resolverse con rapidez y producir un informe claro. La profundidad exacta del sistema aún debe determinarse mediante prototipos.
+Valores por validar en el laboratorio:
 
-## 12. Terreno y regiones
+- Producciones, consumos y valores unitarios actuales.
+- Coste y composición de las mejoras.
+- Excedente objetivo del 20% y valor añadido del 10%.
+- Duración de 90 días fuera del laboratorio económico.
 
-El mapa se divide en regiones y ciudades. El terreno proporciona bonificaciones y penalizaciones en batalla y, posiblemente, también en la economía.
+Sistemas todavía abiertos:
 
-Ejemplos de identidad territorial:
+- Población y consumo de comida, agua, ropa y cerveza.
+- Tabla definitiva de tropas y razas en combate.
+- Límites diarios de ataques y puntos de acción.
+- Personalidades, diplomacia y decisiones de la IA.
+- Profundidad del combate y fórmula de rankings.
+- Fama, monumentos, magia global y afinidades zodiacales.
+- Guardado de partida, regiones y mapas definitivos.
 
-- Bosques favorables para emboscadas o unidades ligeras.
-- Montañas favorables para defensores.
-- Llanuras adecuadas para caballería o grandes ejércitos.
-- Zonas heladas que penalizan la movilidad.
-- Regiones mágicas o sagradas con efectos especiales.
-
-La posición de una ciudad debe importar, evitando que todos los asentamientos sean intercambiables.
-
-## 13. Clanes
-
-Los imperios pueden organizarse en clanes. Aunque el juego sea individual, los demás miembros son imperios controlados por IA.
-
-Los clanes permiten:
-
-- Declarar guerras.
-- Coordinar ataques.
-- Compartir objetivos.
-- Utilizar magia global.
-- Controlar regiones.
-- Competir en rankings colectivos.
-
-El jugador puede liderar un clan, unirse a uno existente o permanecer independiente.
-
-## 14. Control regional
-
-Una región está gobernada por el clan que posee la mayor cantidad de ciudades dentro de ella.
-
-Controlar una región puede conceder:
-
-- Bonificaciones económicas.
-- Producción adicional.
-- Prestigio o fama.
-- Ventajas de movimiento.
-- Bonos de combate.
-- Acceso a edificios o tropas especiales.
-- Puntos de ranking.
-
-La conquista de una sola ciudad puede cambiar el control de toda una región, creando objetivos territoriales concretos para las guerras.
-
-## 15. Guerras de clanes
-
-Las guerras de clanes no son únicamente una sucesión de ataques individuales. Incorporan:
-
-- Objetivos territoriales.
-- Ataques coordinados.
-- Magia global.
-- Desgaste de puntos de acción.
-- Control regional.
-- Recompensas colectivas.
-- Rankings de guerra.
-
-Los magos y sacerdotes de nivel alto tienen especial importancia durante estas guerras, incluida la posibilidad de atacar la capacidad operativa enemiga.
-
-## 16. Fama y monumentos
-
-La fama es un recurso producido principalmente por monumentos y puede gastarse en beneficios especiales. Representa prestigio cultural, legitimidad, influencia religiosa, reconocimiento militar y poder simbólico.
-
-Sus usos potenciales incluyen:
-
-- Bonificaciones permanentes o temporales.
-- Acceso a héroes.
-- Eventos especiales.
-- Mejoras de clan.
-- Magia o bendiciones.
-- Desempates en rankings.
-
-Los efectos y costes concretos siguen abiertos.
-
-## 17. Rankings y condiciones de victoria
-
-La campaña ofrece varios rankings para permitir distintas formas de destacar:
-
-- Valor del imperio o `Empire Value`.
-- Mayor número de ciudades.
-- Mejor economía.
-- Mayor población.
-- Mayor índice bélico.
-- Héroe con más victorias.
-- Imperio con mejores héroes.
-- Mayor cantidad de territorios controlados.
-- Mayor fama.
-- Mejor clan.
-
-La clasificación principal probablemente será `Empire Value`, pero el jugador puede perseguir objetivos secundarios o victorias especializadas. La fórmula de valor del imperio aún no está definida.
-
-## 18. Sistema de ventajas zodiacales
-
-Se propone un sistema de afinidades basado en signos zodiacales, elementos y polaridades. Encaja con el concepto de destino de Wyrd y puede aportar una capa adicional a las relaciones entre unidades.
-
-Cada unidad, héroe o ejército podría tener:
-
-- Un signo.
-- Un elemento: fuego, tierra, aire o agua.
-- Una polaridad.
-
-Estas propiedades generarían relaciones favorables o desfavorables. Para evitar una complejidad excesiva, deberían expresarse mediante efectos sencillos, como:
-
-- Un modificador pequeño de combate.
-- Sinergia entre héroe y tropas.
-- Afinidad con determinadas regiones.
-- Calendarios o estaciones que favorezcan algunos signos.
-
-La tabla completa de relaciones y el alcance definitivo del sistema siguen abiertos.
-
-## 19. Identidad visual
-
-Wyrd debe distinguirse visualmente de Scoundrel:
-
-- **Scoundrel:** low poly muy claro, cercano a Synty.
-- **Project Wyrd:** estilo toon o estilizado más rico, con mayor variedad ambiental.
-
-Wyrd necesita representar reinos, regiones, terrenos de batalla, ciudades, encuentros y cambios climáticos o geográficos. Los biomas estilizados son una referencia adecuada, aunque el proyecto no se plantea como un MMO.
-
-## 20. Arquitectura técnica
-
-La lógica del juego se separa completamente de su presentación.
-
-### Núcleo en C#
-
-`Wyrd.Core` debe contener:
-
-- Reglas de ciudades.
-- Población.
-- Recursos.
-- Tropas.
-- Héroes.
-- Combate.
-- Clanes.
-- IA.
-- Paso de días.
-- Rankings.
-- Guardado de partida.
-- Simulación del mundo.
-
-El núcleo es una biblioteca C# sin dependencias directas de Unity ni Blazor.
-
-### Presentaciones intercambiables
-
-Sobre el núcleo pueden construirse:
-
-- Una aplicación web para prototipar y ajustar reglas rápidamente.
-- Herramientas de simulación.
-- Una interfaz de administración y depuración.
-- La versión final en Unity.
-
-La aplicación web permite ejecutar días rápidamente, observar decisiones de la IA y ajustar el balance sin levantar continuamente una escena compleja de Unity.
-
-Unity se ocupa principalmente de visualización, animaciones, audio, interfaz, mapas, efectos y presentación de combates.
-
-## 21. LOVE/HATE y comportamiento de IA
-
-LOVE/HATE podría utilizarse en Unity para representar amistad, rivalidad, odio, lealtad, miedo, respeto y confianza entre imperios.
-
-Para evitar acoplamiento con Unity, las relaciones básicas deben existir en `Wyrd.Core` mediante valores y reglas propias. LOVE/HATE puede actuar después como una capa adicional de comportamiento o presentación, pero no será un requisito del simulador.
-
-## 22. Estado actual del diseño
-
-### Decisiones establecidas
-
-- Juego completamente offline y para un solo jugador.
-- 100 imperios en total: el jugador y 99 IA.
-- Avance manual mediante días.
-- Campaña con duración limitada.
-- Ciudades, población, tropas y héroes como pilares.
-- Cuatro clases principales de héroe.
-- Combates resueltos por rondas.
-- Puntos de acción acumulables.
-- Clanes, guerras y control regional.
-- Control regional por mayoría de ciudades del clan.
-- Terrenos con modificadores.
-- Múltiples rankings.
-- Núcleo independiente en C#.
-- Blazor como entorno de prototipado y Unity como presentación final.
-- Las relaciones fundamentales de IA deben pertenecer al núcleo, no depender de LOVE/HATE.
-
-### Valores y propuestas provisionales
-
-- 20 tipos o escalones de tropas.
-- Una tropa nueva aproximadamente cada 5.000 habitantes.
-- Seis razas jugables iniciales.
-- Un punto de atributo de héroe cada ocho victorias.
-- Magia global importante a partir de nivel 12.
-- 100 puntos de acción base por día, más bonificaciones.
-- Fases diferenciadas dentro de cada día para limitar ataques.
-- `Empire Value` como clasificación principal.
-- Afinidades zodiacales como modificadores pequeños.
-
-### Cuestiones abiertas
-
-- Número exacto de días por campaña.
-- Cantidad y función de los recursos.
-- Lista final de razas.
-- Tabla completa de las 20 tropas.
-- Fórmula de crecimiento de población.
-- Fórmula de `Empire Value`.
-- Límites diarios de ataques.
-- Profundidad exacta del combate.
-- Personalidades y comportamiento de las IA.
-- Sistema diplomático.
-- Efectos concretos de fama.
-- Reglas zodiacales.
-- Nombres definitivos de regiones y mapas.
-- Alcance de la primera versión jugable.
-
-## 23. Siguiente decisión recomendada
-
-Definir el alcance de la primera simulación vertical: una campaña corta con un número reducido de imperios, una única región, ciudades, producción diaria y ranking básico. Esta rebanada permitiría validar el ciclo **actuar → terminar día → simular mundo → revisar resultados** antes de ampliar tropas, combate, clanes y magia.
+La siguiente iteración debe utilizar los datos obtenidos en el laboratorio para ajustar costes y producciones antes de añadir población o IA.
