@@ -1,0 +1,106 @@
+@page "/"
+
+<PageTitle>Wyrd — Prototipo de estrategia</PageTitle>
+
+<section class="hero-panel">
+    <div>
+        <span class="eyebrow">Prototipo de reglas · Turno @turn</span>
+        <h1>Forja un reino.<br />Conquista una región.</h1>
+        <p class="lead">Wyrd es un laboratorio de estrategia donde ciudades, héroes y ejércitos compiten por dominar el mapa.</p>
+        <button class="primary-action" @onclick="AdvanceTurn">Simular siguiente turno</button>
+    </div>
+    <div class="sigil" aria-hidden="true">W</div>
+</section>
+
+<section class="resource-grid" aria-label="Recursos de la capital">
+    @foreach (var resource in resources)
+    {
+        <article class="resource-card">
+            <span>@resource.Icon</span>
+            <div>
+                <small>@resource.Name</small>
+                <strong>@capital.Resources[resource.Type].ToString("N0")</strong>
+            </div>
+        </article>
+    }
+</section>
+
+<section class="overview-grid">
+    <article class="realm-card featured-card">
+        <span class="card-kicker">Tu reino</span>
+        <h2>@kingdom.Name</h2>
+        <dl>
+            <div><dt>Ciudades</dt><dd>@kingdom.Cities.Count</dd></div>
+            <div><dt>Héroes</dt><dd>@kingdom.Heroes.Count</dd></div>
+            <div><dt>Puntuación</dt><dd>@kingdom.Score</dd></div>
+        </dl>
+    </article>
+
+    <article class="realm-card">
+        <span class="card-kicker">Capital</span>
+        <h2>@capital.Name</h2>
+        <p>Nivel @capital.Level · Muralla @capital.WallLevel</p>
+        <span class="status">Produciendo</span>
+    </article>
+
+    <article class="realm-card">
+        <span class="card-kicker">Comandante</span>
+        <h2>@hero.Name</h2>
+        <p>Nivel @hero.Level · @hero.Army.Soldiers soldados</p>
+        <span class="status">Disponible</span>
+    </article>
+</section>
+
+<section class="rules-section" id="rules">
+    <div>
+        <span class="eyebrow">Dirección del diseño</span>
+        <h2>El ciclo de Wyrd</h2>
+    </div>
+    <ol class="rule-list">
+        <li><strong>Prospera</strong><span>Obtén recursos y mejora los edificios de tus ciudades.</span></li>
+        <li><strong>Recluta</strong><span>Forma ejércitos y confíalos a héroes capaces.</span></li>
+        <li><strong>Conquista</strong><span>Ataca ciudades rivales para controlar regiones del mapa.</span></li>
+        <li><strong>Domina</strong><span>Convierte tu expansión en puntos y alcanza el primer puesto.</span></li>
+    </ol>
+</section>
+
+@code {
+    private readonly City capital = new City("Skallgard", "northern-reach");
+    private readonly Hero hero = new Hero("Yrsa la Errante", new Army(240));
+    private readonly Kingdom kingdom = new Kingdom("El Pacto del Cuervo");
+    private readonly ResourceView[] resources =
+    {
+        new ResourceView(ResourceType.Gold, "Oro", "◆"),
+        new ResourceView(ResourceType.Wood, "Madera", "♣"),
+        new ResourceView(ResourceType.Stone, "Piedra", "⬟"),
+        new ResourceView(ResourceType.Food, "Alimento", "●")
+    };
+    private int turn = 1;
+
+    protected override void OnInitialized()
+    {
+        kingdom.AddCity(capital);
+        kingdom.RecruitHero(hero);
+        GameRules.ApplyCityIncome(capital);
+    }
+
+    private void AdvanceTurn()
+    {
+        GameRules.ApplyCityIncome(capital);
+        turn++;
+    }
+
+    private sealed class ResourceView
+    {
+        public ResourceView(ResourceType type, string name, string icon)
+        {
+            Type = type;
+            Name = name;
+            Icon = icon;
+        }
+
+        public ResourceType Type { get; }
+        public string Name { get; }
+        public string Icon { get; }
+    }
+}

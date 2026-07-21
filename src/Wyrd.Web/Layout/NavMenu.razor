@@ -1,0 +1,35 @@
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href=""><span>W</span> Wyrd</a>
+        <button title="Abrir navegación" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="nav-glyph" aria-hidden="true">⌂</span> Reino
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <a class="nav-link" href="#rules"><span class="nav-glyph" aria-hidden="true">⚔</span> Reglas</a>
+        </div>
+        <div class="nav-item px-3">
+            <span class="nav-link disabled"><span class="nav-glyph" aria-hidden="true">◇</span> Mapa <small>próximamente</small></span>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
