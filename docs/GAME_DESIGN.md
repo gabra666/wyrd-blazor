@@ -5,8 +5,8 @@
 | Campo | Valor |
 | --- | --- |
 | Estado | Preproducción y prototipado de reglas |
-| Versión | 0.2 |
-| Última revisión | 2026-07-22 |
+| Versión | 0.3 |
+| Última revisión | 2026-07-23 |
 | Plataforma de prototipado | Blazor WebAssembly |
 | Presentación final prevista | Unity |
 
@@ -24,6 +24,7 @@
 | --- | --- | --- |
 | 0.1 | 2026-07-21 | Primera consolidación del concepto y los sistemas previstos. |
 | 0.2 | 2026-07-22 | Se define el primer laboratorio económico: siete razas, 25 recursos, cadenas productivas, niveles de edificios, paso del día y Valor del Reino. Se sustituye “imperio” por “reino”. |
+| 0.3 | 2026-07-23 | Se fija una campaña de 90 cambios de día, 50 habitantes fundadores y un máximo de 25.000 habitantes por ciudad. Se incorpora como propuesta la primera curva demográfica. |
 
 ## 1. Concepto central
 
@@ -46,7 +47,7 @@ Los pilares previstos son:
 
 El jugador actúa sin límite de tiempo real y pulsa **Terminar día** para resolver el mundo. En el juego completo ese paso hará avanzar población, recursos, construcciones, entrenamiento, movimientos, ataques, eventos, rankings y control territorial.
 
-El laboratorio económico actual dura **90 días**. Este número sirve para estudiar curvas de crecimiento y no fija todavía la duración definitiva de todas las campañas.
+Una campaña dura **90 cambios de día**. El día es la unidad de turno controlada por el jugador; su equivalencia exacta con el tiempo del mundo todavía debe definirse.
 
 Cada día económico se resuelve en orden:
 
@@ -61,6 +62,14 @@ Un recurso producido en una fase puede consumirse durante una fase posterior del
 Los recursos pertenecen al reino y forman un inventario global compartido por todas sus ciudades. Las ciudades son los núcleos territoriales y productivos; más adelante también contendrán población, defensas, tropas y un héroe asignado.
 
 El primer escenario contiene el reino **El Pacto del Cuervo** y su ciudad **Skallgard**, situada en los Confines del Norte. Skallgard posee un Manantial que aumenta un 5% su producción de agua.
+
+Una ciudad recién fundada comienza como un asentamiento de **50 habitantes** y nunca puede superar los **25.000 habitantes**. Su crecimiento debe ser rápido en términos proporcionales durante las primeras etapas y reducirse al acercarse al límite. Los edificios no producen habitantes directamente: proporcionan agua, alimentos, vivienda, trabajo, seguridad y otros factores que permiten sostener y atraer población.
+
+Como primera propuesta de balance, todavía provisional, se estudiará una curva de Gompertz:
+
+`crecimiento base = 0,056 × población × ln(25.000 / población)`
+
+Esta expresión representa el cambio demográfico total, incluida principalmente la inmigración. La capacidad efectiva de agua, alimentos y vivienda deberá limitar el crecimiento real, por lo que una ciudad solo se acercará a 25.000 habitantes si el jugador amplía continuamente su infraestructura.
 
 El control regional se decidirá por el clan que posea más ciudades en una región. Por tanto, conquistar una ciudad puede cambiar tanto los recursos disponibles como el gobierno regional.
 
@@ -217,9 +226,12 @@ Las relaciones de IA pertenecerán al núcleo. LOVE/HATE podrá complementar la 
 ## 12. Decisiones establecidas
 
 - Juego offline para un solo jugador con avance manual por días.
+- Campañas de 90 cambios de día.
 - Mundo final de un reino jugador y 99 reinos de IA.
 - Terminología `Realm`, Reino y Valor del Reino.
 - Inventario global del reino.
+- 50 habitantes al fundar una ciudad y máximo de 25.000 habitantes por ciudad.
+- Crecimiento demográfico rápido proporcionalmente al principio y lento al acercarse al máximo.
 - Siete razas jugables vinculadas a Yggdrasil.
 - 25 recursos agrupados en cuatro etapas.
 - Un edificio de cada tipo por ciudad, niveles 0–10 y mejora inmediata.
@@ -235,11 +247,13 @@ Valores por validar en el laboratorio:
 - Producciones, consumos y valores unitarios actuales.
 - Coste y composición de las mejoras.
 - Excedente objetivo del 20% y valor añadido del 10%.
-- Duración de 90 días fuera del laboratorio económico.
+- Fórmula demográfica de Gompertz y coeficiente inicial de 0,056.
+- Umbrales de asentamiento, aldea, pueblo, ciudad y metrópolis.
+- Correspondencia entre un cambio de día y el tiempo transcurrido dentro del mundo.
 
 Sistemas todavía abiertos:
 
-- Población y consumo de comida, agua, ropa y cerveza.
+- Modificadores demográficos y consumo de comida, agua, ropa y cerveza.
 - Tabla definitiva de tropas y razas en combate.
 - Límites diarios de ataques y puntos de acción.
 - Personalidades, diplomacia y decisiones de la IA.
